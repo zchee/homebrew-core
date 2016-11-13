@@ -2,8 +2,8 @@ class DockerMachineDriverXhyve < Formula
   desc "Docker Machine driver for xhyve"
   homepage "https://github.com/zchee/docker-machine-driver-xhyve"
   url "https://github.com/zchee/docker-machine-driver-xhyve.git",
-    :tag => "v0.3.0",
-    :revision => "b74c23dc15666ad6d5ccdd207b87a6c44bdd584d"
+    :tag => "v0.3.1",
+    :revision => "ab0aebaeba32c3a3ca3c201c1e02dc35dd862c99"
 
   head "https://github.com/zchee/docker-machine-driver-xhyve.git"
 
@@ -20,7 +20,7 @@ class DockerMachineDriverXhyve < Formula
   depends_on "docker-machine" => :recommended
   if build.with? "qcow2"
     depends_on "opam"
-    depends_on "libev"
+    depends_on "libev" => :build
   end
 
   def install
@@ -38,8 +38,12 @@ class DockerMachineDriverXhyve < Formula
 
       if build.with? "qcow2"
         build_tags << " qcow2"
+        ENV["LIBEV_FILE"] = "#{Formula["libev"].lib}/libev.a"
+
         system "opam", "init", "--no-setup"
         opam_dir = "#{buildpath}/.brew_home/.opam"
+
+        # To imitate 'eval `opam init`'
         ENV["CAML_LD_LIBRARY_PATH"] = "#{opam_dir}/system/lib/stublibs:/usr/local/lib/ocaml/stublibs"
         ENV["OPAMUTF8MSGS"] = "1"
         ENV["PERL5LIB"] = "#{opam_dir}/system/lib/perl5"
@@ -48,11 +52,11 @@ class DockerMachineDriverXhyve < Formula
         system "opam", "install", "-y", "uri", "qcow-format", "conf-libev"
       end
 
-      go_ldflags = "-w -s -X 'github.com/zchee/docker-machine-driver-xhyve/xhyve.GitCommit=Homebrew#{git_hash}'"
+      go_ldflags = "-w -s -X=github.com/zchee/docker-machine-driver-xhyve/xhyve.GitCommit=Homebrew-#{git_hash}"
       ENV["GO_LDFLAGS"] = go_ldflags
       ENV["GO_BUILD_TAGS"] = build_tags
       system "make", "lib9p"
-      system "make", "build"
+      system "make", "build", "V=1"
       bin.install "bin/docker-machine-driver-xhyve"
     end
   end
