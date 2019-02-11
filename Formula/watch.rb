@@ -18,12 +18,16 @@ class Watch < Formula
   depends_on "automake" => :build
   depends_on "libtool" => :build
   depends_on "pkg-config" => :build
+  depends_on "ncurses" => :build
 
   depends_on "gettext"
 
   conflicts_with "visionmedia-watch"
 
   def install
+    ENV["NCURSESW_CFLAGS"] = "#{Formula["ncurses"].include} #{Formula["ncurses"].include}/ncursesw"
+    ENV["NCURSESW_LIBS"] = "#{Formula["ncurses"].lib} -lncursesw"
+
     system "autoreconf", "-fiv"
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}",
